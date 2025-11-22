@@ -1,6 +1,33 @@
+# Core Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# File Handling
 python-multipart==0.0.6
+
+# HTTP & Networking
 requests==2.31.0
+httpx==0.25.2
+urllib3==2.1.0
+
+# Security & Hashing
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+cryptography==41.0.7
+
+# Environment & Configuration
 python-dotenv==1.0.0
+
+# Date & Time
+python-dateutil==2.8.2
+
+# Data Processing
+numpy==1.26.2
+pandas==2.1.3
+
+# Optional: Advanced Analysis (uncomment if needed)
+# yara-python==4.3.1
+# pefile==2023.2.7
+# python-magic==0.4.27
