@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, Link, Activity, Shield, AlertTriangle, CheckCircle, XCircle, Globe, FileSearch, Network, Eye, Download, Info, AlertOctagon, ShieldAlert, TrendingUp, BarChart3, PieChart, Zap, Lock, Unlock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, Link, Activity, Shield, AlertTriangle, CheckCircle, XCircle, Globe, FileSearch, Network, Eye, Download, Info, AlertOctagon, ShieldAlert, TrendingUp, BarChart3, PieChart, Zap, Lock, Unlock, MessageCircle, Send, X } from 'lucide-react';
 
 const CyberMLDashboard = () => {
   const [activeTab, setActiveTab] = useState('upload');
