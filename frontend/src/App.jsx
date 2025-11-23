@@ -12,6 +12,68 @@ const CyberMLDashboard = () => {
   const [networkMonitoring, setNetworkMonitoring] = useState(false);
   const [networkData, setNetworkData] = useState({ packets: 0, threats: 0, connections: 0, bandwidth: 0 });
   const [networkLogs, setNetworkLogs] = useState([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
+
+  const API_URL = 'http://localhost:8000';
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setChatLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          context: analysisResult
+        })
+      });
+
+      const data = await response.json();
+      setChatMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+    } catch (error) {
+      setChatMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Sorry, I encountered an error. Please try again.' 
+      }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const downloadPDF = async () => {
+    if (!analysisResult) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/report/${analysisResult.analysis_id}/pdf`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cyberml_report_${analysisResult.analysis_id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Failed to download PDF report');
+    }
+  };
 
   useEffect(() => {
     if (networkMonitoring) {
@@ -766,7 +828,7 @@ const CyberMLDashboard = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-4">
-                <button className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <button onClick={downloadPDF} className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
                   <Download className="w-5 h-5" />
                   Download PDF Report
                 </button>
@@ -778,6 +840,85 @@ const CyberMLDashboard = () => {
             </div>
           )}
         </div>
+
+        {/* AI Chatbot */}
+        {chatOpen && (
+          <div className="fixed bottom-24 right-8 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border-2 border-blue-500 flex flex-col z-50">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-6 h-6" />
+                <div>
+                  <h3 className="font-bold">CyberML AI Assistant</h3>
+                  <p className="text-xs text-blue-100">Powered by Gemini</p>
+                </div>
+              </div>
+              <button onClick={() => setChatOpen(false)} className="hover:bg-white/20 p-1 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {chatMessages.length === 0 && (
+                <div className="text-center text-gray-500 mt-8">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm">Ask me anything about cybersecurity!</p>
+                </div>
+              )}
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] p-3 rounded-2xl ${
+                    msg.role === 'user' 
+                      ? 'bg-blue-600 text-white rounded-br-none' 
+                      : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                  }`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 p-3 rounded-2xl rounded-bl-none">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                  placeholder="Ask about security threats..."
+                  className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none"
+                  disabled={chatLoading}
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="bg-blue-600 text-white p-2 rounded-xl hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Chatbot Toggle Button */}
+        <button
+          onClick={() => setChatOpen(!chatOpen)}
+          className="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all transform hover:scale-110 z-40"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </button>
 
         {/* Sidebar */}
         <div className="space-y-6">
