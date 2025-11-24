@@ -1,0 +1,7 @@
+[build]
+root = "backend"            # change to your app folder; "" for repo root
+install = "npm install"
+build = "npm run build"
+
+[deploy]
+start = "npm start"
