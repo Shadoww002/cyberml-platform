@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Link, Activity, Shield, AlertTriangle, CheckCircle, XCircle, Globe, FileSearch, Network, Eye, Download, Info, AlertOctagon, ShieldAlert, TrendingUp, BarChart3, PieChart, Zap, Lock, Unlock, MessageCircle, Send, X, Code, Server, Clock, Calendar, Hash, Layers, ChevronDown, ChevronUp } from 'lucide-react';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // --- Custom Component for Collapsible Detail Sections ---
 const DetailSection = ({ title, data, Icon }) => {
